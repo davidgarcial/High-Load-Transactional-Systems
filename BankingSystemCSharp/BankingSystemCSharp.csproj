@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- MongoDB driver for .NET -->
+    <PackageReference Include="MongoDB.Driver" Version="2.16.0" />
+
+    <!-- Confluent's Kafka .NET client -->
+    <PackageReference Include="Confluent.Kafka" Version="2.2.0" />
+
+    <!-- ASP.NET Core dependencies, if needed -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    
+    <!-- Prometheus metrics for .NET -->
+    <PackageReference Include="prometheus-net.AspNetCore" Version="7.0.0" />
+  </ItemGroup>
+
+</Project>
