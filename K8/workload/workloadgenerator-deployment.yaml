@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workloadgenerator
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: workloadgenerator
+  template:
+    metadata:
+      labels:
+        app: workloadgenerator
+    spec:
+      containers:
+      - name: workloadgenerator
+        image: davidgarcial/bankingsystemworkloadgenerator:latest
+        env:
+        - name: KAFKA_URL
+          value: "kafka:9092"
+        - name: KAFKA_TOPIC
+          value: "transaction-topic"
+        - name: ACCOUNTS
+          value: "1000"
+        - name: TRANSACTIONS
+          value: "50000"
+        - name: DELAY
+          value: "10000"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workloadgenerator
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: workloadgenerator

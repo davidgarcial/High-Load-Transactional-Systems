@@ -1,0 +1,98 @@
+version: '3.7'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - app-network
+
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_CREATE_TOPICS: "transaction-topic:1:1"
+      KAFKA_MESSAGE_MAX_BYTES: "2097152"
+      KAFKA_REPLICA_FETCH_MAX_BYTES: "2097152"
+    depends_on:
+      - zookeeper
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - app-network
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+
+  cplus:
+    build:
+      context: ./BankingSystemC
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_URL: "kafka:9092"
+      KAFKA_TOPIC: "transaction-topic"
+      MONGODB_CONNECTION_STRING: "mongodb://mongodb:27017"
+      MONGODB_DATABASE: "cplus"
+      MONGODB_COLLECTION: "accounts"
+    networks:
+      - app-network
+
+  rustapp:
+    build:
+      context: ./BankingSystemRust
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_URL: "kafka:9092"
+      KAFKA_TOPIC: "transaction-topic"
+      MONGODB_CONNECTION_STRING: "mongodb://mongodb:27017"
+      MONGODB_DATABASE: "rustapp"
+      MONGODB_COLLECTION: "accounts"
+    networks:
+      - app-network
+      
+  csharpapp:
+    build:
+      context: ./BankingSystemCSharp
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_URL: "kafka:9092"
+      KAFKA_TOPIC: "transaction-topic"
+      MONGODB_CONNECTION_STRING: "mongodb://mongodb:27017"
+      MONGODB_DATABASE: "csharpapp"
+      MONGODB_COLLECTION: "accounts"
+    networks:
+      - app-network
+
+  workloadgenerator:
+    build:
+      context: ./WorkloadGenerator
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_URL: "kafka:9092"
+      KAFKA_TOPIC: "transaction-topic"
+      ACCOUNTS: 1000
+      TRANSACTIONS: 50000
+      DELAY: 10000
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scaler-script
+data:
+  scale.sh: |
+    #!/bin/bash
+    echo "Scaling to 10 replicas..."
+    kubectl scale deployment/workloadgenerator --replicas=10
+    sleep 1200  # Sleep for 20 minutes
+
+    echo "Scaling to 20 replicas..."
+    kubectl scale deployment/workloadgenerator --replicas=30
+    sleep 1200
+
+    echo "Scaling to 30 replicas..."
+    kubectl scale deployment/workloadgenerator --replicas=50
+    sleep 1200
+
+    echo "Scaling to 0 replicas..."
+    kubectl scale deployment/workloadgenerator --replicas=0
+
+---
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: workload-scaler
+spec:
+  template:
+    spec:
+      serviceAccountName: scaler
+      containers:
+      - name: scaler
+        image: bitnami/kubectl
+        command: ["/bin/bash", "/scripts/scale.sh"]
+        volumeMounts:
+        - name: script
+          mountPath: /scripts
+      restartPolicy: Never
+      volumes:
+      - name: script
+        configMap:
+          name: scaler-script
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: scaler
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deployment-scaler
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "deployments/scale"]
+  verbs: ["get", "list", "update", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: deployment-scaler-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: deployment-scaler
+subjects:
+- kind: ServiceAccount
+  name: scaler

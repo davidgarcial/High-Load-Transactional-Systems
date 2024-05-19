@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bankingsystemcsharp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bankingsystemcsharp
+  template:
+    metadata:
+      labels:
+        app: bankingsystemcsharp
+    spec:
+      containers:
+      - name: bankingsystemcsharp
+        image: davidgarcial/bankingsystemcsharp:latest
+        env:
+        - name: KAFKA_URL
+          value: "kafka:9092"
+        - name: KAFKA_TOPIC
+          value: "transaction-topic"
+        - name: MONGODB_CONNECTION_STRING
+          value: "mongodb://mongodb:27017"
+        - name: MONGODB_DATABASE
+          value: "csharpapp"
+        - name: MONGODB_COLLECTION
+          value: "accounts"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bankingsystemcsharp
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: bankingsystemcsharp

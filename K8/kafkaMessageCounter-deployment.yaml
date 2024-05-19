@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-message-counter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-message-counter
+  template:
+    metadata:
+      labels:
+        app: kafka-message-counter
+    spec:
+      containers:
+      - name: kafka-message-counter
+        image: davidgarcial/kafkamessagecounter:latest
+        env:
+        - name: KAFKA_URL
+          value: "kafka:9092"
+        - name: KAFKA_TOPIC
+          value: "transaction-topic"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-message-counter
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: kafka-message-counter
